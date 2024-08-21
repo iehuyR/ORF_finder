@@ -1,0 +1,40 @@
+# ORFを見つける関数
+findORF <- function(DNASequence) {
+  start_codon <- "ATG"
+  stop_codons <- c("TAA", "TAG", "TGA")
+  min_length <- 200
+  
+  seq_length <- nchar(DNASequence)
+  orf_list <- list()
+  
+  for (frame in 0:2) {
+    positions <- seq(frame + 1, seq_length, by = 3)
+    codons <- substring(DNASequence, positions, positions + 2)
+    
+    start_positions <- which(codons == start_codon)
+    stop_positions <- which(codons %in% stop_codons)
+    
+    for (start in start_positions) {
+      valid_stops <- stop_positions[stop_positions > start]
+      if (length(valid_stops) > 0) {
+        orf_start <- positions[start]
+        orf_end <- positions[valid_stops[1]] + 2
+        orf_length <- orf_end - orf_start + 1
+        if (orf_length >= min_length) {
+          orf_list <- append(orf_list, list(c(orf_start, orf_end)))
+        }
+      }
+    }
+  }
+  
+  return(orf_list)
+}
+
+
+
+Queensland_ID_contig_number <- c()
+
+for (n in 1:length(Queensland_ID_split)){
+  Queensland_ID_contig_number <- rbind(Queensland_ID_contig_number, Queensland_ID_split[[n]][7])
+}
+#contig番号を取り出し
