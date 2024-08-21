@@ -1,0 +1,78 @@
+Q_obj_cadherin_like_region_can1
+
+CRB_cadherin_like <- as.character(Q_obj_cadherin_like_region_can1)
+
+# 配列の長さ
+CRB_cadherin_like_seq_length <- nchar(CRB_cadherin_like)
+
+
+
+######xxxbpの配列を抽出する関数
+extract_subsequences <- function(sequence, window_size) {
+  subsequences <- c()  # 結果を保存するベクトル
+  for (i in 1:(nchar(sequence) - window_size + 1)) {
+    subseq <- substr(sequence, i, i + window_size - 1)
+    subsequences <- c(subsequences, subseq)
+  }
+  return(subsequences)
+}
+
+
+
+#######Multi-FASTAファイルに書き出す関数(16bp)
+write_multi_fasta_16 <- function(sequences, filename) {
+  # ファイルを書き込みモードで開く
+  file_conn <- file(filename, "w")
+  
+  # 各配列を書き出す
+  for (i in seq_along(sequences)) {
+    # ヘッダーの作成
+    header <- paste0(">Subseq_16bp_", i)
+    # 配列とヘッダーをファイルに書き込む
+    writeLines(header, file_conn)
+    writeLines(sequences[i], file_conn)
+  }
+  
+  # ファイルを閉じる
+  close(file_conn)
+}
+
+######Multi-FASTAファイルに書き出す関数(26bp)
+write_multi_fasta_26 <- function(sequences, filename) {
+  # ファイルを書き込みモードで開く
+  file_conn <- file(filename, "w")
+  
+  # 各配列を書き出す
+  for (i in seq_along(sequences)) {
+    # ヘッダーの作成
+    header <- paste0(">Subseq_26bp_", i)
+    # 配列とヘッダーをファイルに書き込む
+    writeLines(header, file_conn)
+    writeLines(sequences[i], file_conn)
+  }
+  
+  # ファイルを閉じる
+  close(file_conn)
+}
+
+
+
+
+
+# 16bpの配列を抽出
+window_size_16 <- 16
+Sub16_CRB_cadherin_like <- extract_subsequences(CRB_cadherin_like, window_size_16)
+
+# 26bpの配列を抽出
+window_size_26 <- 26
+Sub26_CRB_cadherin_like <- extract_subsequences(CRB_cadherin_like, window_size_26)
+
+
+# 出力ファイル名
+Sub16_CRB_cadherin_like_output_file <- "Sub16_CRB_cadherin_like_output.fasta"
+Sub26_CRB_cadherin_like_output_file <- "Sub26_CRB_cadherin_like_output.fasta"
+
+
+# Multi-FASTAファイルに書き出す
+write_multi_fasta_16(Sub16_CRB_cadherin_like, Sub16_CRB_cadherin_like_output_file)
+write_multi_fasta_26(Sub26_CRB_cadherin_like, Sub26_CRB_cadherin_like_output_file)
