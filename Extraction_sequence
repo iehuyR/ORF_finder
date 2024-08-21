@@ -1,0 +1,14 @@
+#####91contigを抽出######
+for(i in 1:1013){
+  if(Queensland_ID_contig_number[i] == "91,"){
+    Q_obj_91_F <- CRBgenomeQueensland[i]
+  }
+}
+
+#配列抽出
+Q_obj_shrb_region <- DNAStringSet()
+
+Q_obj_shrb_region <- subseq(Q_obj_91_F, start = 11989003, end = 11989247)
+
+#書き出し
+writeXStringSet(Q_obj_shrb_region, file = "CRB_shrb_selectedregion.fasta", format="fasta")
