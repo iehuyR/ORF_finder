@@ -1,0 +1,150 @@
+#################e-valueで並べ替えトップヒットを抽出(ホモログ一覧)##########
+
+library(Biostrings)
+
+
+CRBGxTcRNAi_result <- read.table("CRBGxT.c.RNAiresult.txt")
+
+colnames(CRBGxTcRNAi_result) <- c("query", "subject", "identity", "aligne_len", "mismatch", "gap_open",
+                                  "q_start", "q_end", "s_start", "s_end", "evalue", "bit_score")
+
+CRBGxTcRNAi_sort <- CRBGxTcRNAi_result[sort(as.numeric(CRBGxTcRNAi_result$evalue), decreasing = F, index = T)$ix,]
+
+List_CRBGxTcRNAi_result <- unique(CRBGxTcRNAi_result$query)
+
+CRBGxTcRNAi_top <-
+  CRBGxTcRNAi_sort[match(as.character(List_CRBGxTcRNAi_result), as.character(CRBGxTcRNAi_sort$query)),]
+
+rownames(CRBGxTcRNAi_top) <- CRBGxTcRNAi_top$query
+
+CRBGxTcRNAi_best_rows <- unlist(lapply(as.character(List_CRBGxTcRNAi_result),
+                                       function(x)intersect(which(CRBGxTcRNAi_result$query == x),
+                                                            which(CRBGxTcRNAi_result$evalue == CRBGxTcRNAi_top[x, "evalue"])
+                                                            )))
+
+CRBGxTcRNAi_best <- CRBGxTcRNAi_result[CRBGxTcRNAi_best_rows,]
+
+write.csv(x = CRBGxTcRNAi_best, file = "CRBGxTcRNAi_best.csv")
+
+##########位置リスト作製##########
+
+
+CRBGxTcRNAi_best_coordinate_columlist <- c("subject", "s_start", "s_end")
+CRBGxTcRNAi_best_coordinate <- CRBGxTcRNAi_best[, CRBGxTcRNAi_best_coordinate_columlist]
+
+
+########まあこさん#########
+
+
+CRBgenomeQueensland <- readDNAStringSet("CRBgenomeQueensland.fasta", format = "fasta")
+
+
+#######split後一個目を抽出#########
+
+# DNAStringSetオブジェクトから名前を取得してベクトルにする
+Queensland_IDs <- names(CRBgenomeQueensland)
+##近いかんじ、、、
+
+Queensland_ID_split <- str_split(Queensland_IDs, pattern = "_")
+#_で区切り
+
+Queensland_ID_split_firstname <- c()
+
+for (n in 1:length(Queensland_ID_split)){
+  Queensland_ID_split_firstname <- rbind(Queensland_ID_split_firstname, Queensland_ID_split[[n]][1])
+}
+#名前を取り出し
+
+#######任意の配列を抽出#########
+
+
+Queensland_forward <- NULL
+Queensland_reverse <- NULL
+
+for(i in 1:nrow(CRBGxTcRNAi_best_coordinate)){
+  Q_obj <- Queensland_ID_split_firstname == CRBGxTcRNAi_best_coordinate[i,"subject"]
+  if(CRBGxTcRNAi_best_coordinate[i, "s_start"] - CRBGxTcRNAi_best_coordinate[i, "s_end"] <= 0){
+    Queensland_forward <- append(Queensland_forward, subseq(CRBgenomeQueensland[Q_obj], start = CRBGxTcRNAi_best_coordinate[i,"s_start"],
+                                                                  end = CRBGxTcRNAi_best_coordinate[i,"s_end"]))
+  }else{
+    Queensland_reverse <- append(Queensland_reverse, subseq(CRBgenomeQueensland[Q_obj], start = CRBGxTcRNAi_best_coordinate[i,"s_end"],
+                                                                  end = CRBGxTcRNAi_best_coordinate[i,"s_start"]))
+  }
+}
+
+
+####write.fasta(Queensland_forward, file = "Queensland_forward.fasta")##########
+
+
+writeXStringSet(Queensland_forward, file = "Queensland_forward.fasta", format="fasta")
+writeXStringSet(Queensland_reverse, file = "Queensland_reverse.fasta", format="fasta")
+####out_forwardにfastaを指定、writeXStringSetで書き込み。*file=の引数を忘れずに！
+
+
+####################################おりかえし##############################################
+
+##########おりかえしトップヒット抽出#########
+
+library(Biostrings)
+
+
+CRBreversexT.c.result <- read.table("CRBreversexT.c.resultfmt6.txt")
+CRBforwardxT.c.result <- read.table("CRBforwardxT.c.resultfmt6.txt")
+
+
+colnames(CRBreversexT.c.result) <- c("query", "subject", "identity", "aligne_len", "mismatch", "gap_open",
+                                  "q_start", "q_end", "s_start", "s_end", "evalue", "bit_score")
+colnames(CRBforwardxT.c.result) <- c("query", "subject", "identity", "aligne_len", "mismatch", "gap_open",
+                                  "q_start", "q_end", "s_start", "s_end", "evalue", "bit_score")
+
+
+CRBreversexT.c.result_sort <- CRBreversexT.c.result[sort(as.numeric(CRBreversexT.c.result$evalue), decreasing = F, index = T)$ix,]
+CRBforwardxT.c.result_sort <- CRBforwardxT.c.result[sort(as.numeric(CRBforwardxT.c.result$evalue), decreasing = F, index = T)$ix,]
+
+
+List_CRBreversexT.c.result <- unique(CRBreversexT.c.result$query)
+List_CRBforwardxT.c.result <- unique(CRBforwardxT.c.result$query)
+
+
+CRBreversexT.c.result_top <-
+  CRBreversexT.c.result_sort[match(as.character(List_CRBreversexT.c.result), as.character(CRBreversexT.c.result_sort$query)),]
+CRBforwardxT.c.result_top <-
+  CRBforwardxT.c.result_sort[match(as.character(List_CRBforwardxT.c.result), as.character(CRBforwardxT.c.result_sort$query)),]
+
+
+rownames(CRBreversexT.c.result_top) <- CRBreversexT.c.result_top$query
+rownames(CRBforwardxT.c.result_top) <- CRBforwardxT.c.result_top$query
+
+
+CRBreversexT.c.result_best_rows <- unlist(lapply(as.character(List_CRBreversexT.c.result),
+                                       function(x)intersect(which(CRBreversexT.c.result$query == x),
+                                                            which(CRBreversexT.c.result$evalue == CRBreversexT.c.result_top[x, "evalue"])
+                                       )))
+CRBforwardxT.c.result_best_rows <- unlist(lapply(as.character(List_CRBforwardxT.c.result),
+                                       function(x)intersect(which(CRBforwardxT.c.result$query == x),
+                                                            which(CRBforwardxT.c.result$evalue == CRBforwardxT.c.result_top[x, "evalue"])
+                                       )))
+
+
+CRBreversexT.c.result_best <- CRBreversexT.c.result[CRBreversexT.c.result_best_rows,]
+CRBforwardxT.c.result_best <- CRBforwardxT.c.result[CRBforwardxT.c.result_best_rows,]
+
+
+write.csv(x = CRBreversexT.c.result_best, file = "CRBreversexT.c.result_best.csv")
+write.csv(x = CRBforwardxT.c.result_best, file = "CRBforwardxT.c.result_best.csv")
+
+
+
+##########おりかえし位置リスト作製##########
+
+
+CRBreversexT.c.result_best_coordinate <- CRBreversexT.c.result_best[, "subject", "s_start", "s_end"]
+CRBforwardxT.c.result_best_coordinate <- CRBforwardxT.c.result_best[, "subject", "s_start", "s_end"]
+#不要？
+
+CRBreversexT.c.result_best_coordinate_columlist <- c("subject", "s_start", "s_end")
+CRBreversexT.c.result_best_coordinate <- CRBreversexT.c.result_best[, CRBreversexT.c.result_best_coordinate_columlist]
+
+CRBforwardxT.c.result_best_coordinate_columlist <- c("subject", "s_start", "s_end")
+CRBforwardxT.c.result_best_coordinate <- CRBforwardxT.c.result_best[, CRBforwardxT.c.result_best_coordinate_columlist]
+
